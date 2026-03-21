@@ -1,0 +1,9 @@
+build/
+.gradle/
+.idea/
+.intellijPlatform/
+*.jar
+*.txt
+*.py
+*.e
+*.bat

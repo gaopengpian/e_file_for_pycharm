@@ -1,0 +1,80 @@
+<idea-plugin>
+    <id>com.github.antigravity.efile</id>
+    <name>E-File Support</name>
+    <vendor email="support@example.com" url="https://github.com/antigravity/efile">Antigravity</vendor>
+
+    <description><![CDATA[
+    Support for China Electric Power System Data Markup Language (E-Language) files (.e, .dt).<br>
+    Features:<br>
+    <ul>
+        <li>Syntax Highlighting</li>
+        <li>Rainbow Column Coloring</li>
+        <li>Module Folding</li>
+        <li>Column Alignment Formatting</li>
+        <li>Force GBK Encoding</li>
+    </ul>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType
+            name="EFILE"
+            implementationClass="com.github.antigravity.efile.EFileType"
+            fieldName="INSTANCE"
+            language="E-File"
+            extensions="e;dt;cime"/>
+
+        <lang.parserDefinition
+            language="E-File"
+            implementationClass="com.github.antigravity.efile.lang.EParserDefinition"/>
+
+        <lang.syntaxHighlighterFactory
+            language="E-File"
+            implementationClass="com.github.antigravity.efile.highlight.EHighlighterFactory"/>
+
+        <annotator
+            language="E-File"
+            implementationClass="com.github.antigravity.efile.highlight.ERainbowAnnotator"/>
+
+        <lang.foldingBuilder
+            language="E-File"
+            implementationClass="com.github.antigravity.efile.fold.EFoldingBuilder"/>
+
+        <lang.psiStructureViewFactory
+            language="E-File"
+            implementationClass="com.github.antigravity.efile.structure.EStructureViewFactory"/>
+
+        <breadcrumbsInfoProvider implementation="com.github.antigravity.efile.breadcrumbs.EBreadcrumbsProvider"/>
+
+        <lang.formatter
+            language="E-File"
+            implementationClass="com.github.antigravity.efile.format.EFormattingModelBuilder"/>
+
+        <fileEncodingProvider implementation="com.github.antigravity.efile.io.EEncodingProvider"/>
+
+        <notificationGroup id="E-File Notification" displayType="BALLOON"/>
+
+        <toolWindow id="E-File Structure"
+                    anchor="right"
+                    icon="AllIcons.Toolwindows.ToolWindowStructure"
+                    factoryClass="com.github.antigravity.efile.toolwindow.EToolWindowFactory"/>
+
+        <!-- 启动时显示版本更新提示 -->
+        <postStartupActivity implementation="com.github.antigravity.efile.EPluginStartupActivity"/>
+    </extensions>
+    
+    <applicationListeners>
+        <listener class="com.github.antigravity.efile.ui.EFileEditorListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    </applicationListeners>
+
+    <actions>
+        <action id="com.github.antigravity.efile.actions.EFormatAction" 
+                class="com.github.antigravity.efile.actions.EFormatAction" 
+                text="Format EFILE" 
+                description="Reformat columns and alignment for EFILE">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift E"/>
+        </action>
+    </actions>
+</idea-plugin>
