@@ -13,12 +13,53 @@ import com.intellij.psi.util.PsiTreeUtil
 class EFoldingBuilder : FoldingBuilderEx(), DumbAware {
     override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {
         val descriptors = mutableListOf<FoldingDescriptor>()
-        val modules = PsiTreeUtil.findChildrenOfType(root, PsiElement::class.java) // Naive traversal or use recursion
         
-        // Actually since we have MODULE elements, we can find them
+        // 1. Try PSI based (Standard)
         collectDescriptors(root.node, descriptors)
         
+        // 2. If nothing found (likely Large File mode), use text scanning fallback
+        if (descriptors.isEmpty()) {
+            buildLargeFileFoldRegions(root, document, descriptors)
+        }
+        
         return descriptors.toTypedArray()
+    }
+
+    private fun buildLargeFileFoldRegions(root: PsiElement, document: Document, descriptors: MutableList<FoldingDescriptor>) {
+        val text = document.text
+        val lines = text.split('\n')
+        var currentOffset = 0
+        
+        val startRegex = Regex("^\\s*<([^:>!/\\s]+)(?:::[^>]+)?>")
+        val openModules = mutableListOf<Pair<String, Int>>() // Name to Offset
+        
+        for (line in lines) {
+            val trimmed = line.trimStart()
+            val startMatch = startRegex.find(line)
+            if (startMatch != null) {
+                val name = startMatch.groupValues[1]
+                openModules.add(Pair(name, currentOffset + line.indexOf('<')))
+            } else if (trimmed.startsWith("</")) {
+                val endIdx = trimmed.indexOf('>')
+                if (endIdx > 2) {
+                    val name = trimmed.substring(2, endIdx).trim()
+                    val lastMatchIdx = openModules.indexOfLast { it.first == name }
+                    if (lastMatchIdx >= 0) {
+                        val (startName, startPos) = openModules.removeAt(lastMatchIdx)
+                        val endPosInLine = line.indexOf('>')
+                        if (endPosInLine >= 0) {
+                            val endPos = currentOffset + endPosInLine + 1
+                            if (endPos > startPos + 5) {
+                                // Extract placeholder from text
+                                val placeholder = text.substring(startPos, text.indexOf('>', startPos) + 1) + "..."
+                                descriptors.add(FoldingDescriptor(root.node, TextRange(startPos, endPos), null, placeholder))
+                            }
+                        }
+                    }
+                }
+            }
+            currentOffset += line.length + 1
+        }
     }
 
     private fun collectDescriptors(node: ASTNode, descriptors: MutableList<FoldingDescriptor>) {

@@ -17,6 +17,17 @@ class ELexer : LexerBase() {
         const val STATE_IN_TAG = 1
     }
 
+    private fun isAtLineStart(): Boolean {
+        var i = myTokenStart - 1
+        while (i >= 0) {
+            val c = myBuffer[i]
+            if (c == '\n' || c == '\r') return true
+            if (c != ' ' && c != '\t') return false
+            i--
+        }
+        return true
+    }
+
     override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
         myBuffer = buffer
         myStartOffset = startOffset
@@ -54,12 +65,13 @@ class ELexer : LexerBase() {
             return
         }
 
-        // Handle Comments // - 只将 // 作为 MARKER_COMMENT，后面的内容按普通字段解析
-        // 这样注释行的字段说明可以按列对齐
+        // Handle Comments //
         if (c == '/' && myTokenStart + 1 < myEndOffset && myBuffer[myTokenStart + 1] == '/') {
-            myTokenType = ETokenTypes.MARKER_COMMENT
-            myTokenEnd = myTokenStart + 2
-            return
+            if (isAtLineStart()) {
+                myTokenType = ETokenTypes.MARKER_COMMENT
+                myTokenEnd = myTokenStart + 2
+                return
+            }
         }
         
         // Handle Tags
@@ -113,29 +125,37 @@ class ELexer : LexerBase() {
 
         // Handle Markers
         if (c == '@') {
-            if (myTokenStart + 1 < myEndOffset && myBuffer[myTokenStart + 1] == '@') {
-                myTokenType = ETokenTypes.MARKER_AT_AT
-                myTokenEnd = myTokenStart + 2
-            } else {
-                myTokenType = ETokenTypes.MARKER_AT
-                myTokenEnd = myTokenStart + 1
+            if (isAtLineStart()) {
+                if (myTokenStart + 1 < myEndOffset && myBuffer[myTokenStart + 1] == '@') {
+                    myTokenType = ETokenTypes.MARKER_AT_AT
+                    myTokenEnd = myTokenStart + 2
+                } else {
+                    myTokenType = ETokenTypes.MARKER_AT
+                    myTokenEnd = myTokenStart + 1
+                }
+                return
             }
-            return
         }
         if (c == '#') {
-            myTokenType = ETokenTypes.MARKER_HASH
-            myTokenEnd = myTokenStart + 1
-            return
+            if (isAtLineStart()) {
+                myTokenType = ETokenTypes.MARKER_HASH
+                myTokenEnd = myTokenStart + 1
+                return
+            }
         }
          if (c == '$') {
-            myTokenType = ETokenTypes.MARKER_DOLLAR
-            myTokenEnd = myTokenStart + 1
-            return
+            if (isAtLineStart()) {
+                myTokenType = ETokenTypes.MARKER_DOLLAR
+                myTokenEnd = myTokenStart + 1
+                return
+            }
         }
          if (c == '%') {
-            myTokenType = ETokenTypes.MARKER_PERCENT
-            myTokenEnd = myTokenStart + 1
-            return
+            if (isAtLineStart()) {
+                myTokenType = ETokenTypes.MARKER_PERCENT
+                myTokenEnd = myTokenStart + 1
+                return
+            }
         }
 
         // We allow . : = / inside identifiers now, so we removed their specific checks here.
@@ -172,9 +192,6 @@ class ELexer : LexerBase() {
             // Typically implies ' starts a string. 
             // If we see ' inside, strictly speaking it starts a new token STRING.
             if (k == '\'') break
-            
-            // Break on Comment //
-            if (k == '/' && i + 1 < myEndOffset && myBuffer[i+1] == '/') break
             
             i++
         }
