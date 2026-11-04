@@ -7,7 +7,7 @@ plugins {
 import java.text.SimpleDateFormat
 import java.util.Date
 
-val buildTime = SimpleDateFormat("MMdd.HHmm").format(Date())
+val buildTime = SimpleDateFormat("MMdd.HHmmss").format(Date())
 val pluginVersion = "1.2.$buildTime"
 
 group = "com.github.antigravity"
