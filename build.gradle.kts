@@ -43,7 +43,7 @@ intellijPlatform {
         // These will patch the plugin.xml
         ideaVersion {
             sinceBuild.set("231")
-            untilBuild.set("253.*")
+            untilBuild.set("261.*")
         }
     }
 }
@@ -58,9 +58,7 @@ val copyJarToRoot by tasks.registering(Copy::class) {
     description = "Copies the generated plugin JAR to the project root"
     dependsOn("buildPlugin")
     doNotTrackState("Destination is project root which changes during build")
-    from(layout.buildDirectory.dir("libs"))
-    include("e_file_for_pycharm-*.jar")
-    exclude("*-instrumented.jar", "*-base.jar", "*-searchableOptions.jar")
+    from(tasks.named("composedJar").get().outputs.files)
     into(layout.projectDirectory)
     rename { "e_file_for_pycharm.jar" }
 }

@@ -1,0 +1,54 @@
+name: Build and Release Plugin
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Build plugin
+        run: gradle buildPlugin --no-daemon
+
+      - name: Publish release when version changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          jar=$(find build/libs -maxdepth 1 -type f -name 'e_file_for_pycharm-*.jar' \
+            ! -name '*-base.jar' \
+            ! -name '*-instrumented.jar' \
+            ! -name '*-searchableOptions.jar' \
+            -print -quit)
+          test -n "$jar"
+          version=$(basename "$jar" | sed -E 's/^e_file_for_pycharm-(.*)\.jar$/\1/')
+          test -n "$version"
+          tag="v${version}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; nothing to publish."
+            exit 0
+          fi
+          gh release create "$tag" "$jar" \
+            --title "E-File PyCharm Plugin $version" \
+            --generate-notes

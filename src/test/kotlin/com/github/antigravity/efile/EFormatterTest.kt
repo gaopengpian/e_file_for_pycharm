@@ -2,37 +2,10 @@ package com.github.antigravity.efile
 
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.junit.Test
-import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.codeStyle.CodeStyleManager
 
 class EFormatterTest : LightPlatformCodeInsightFixture4TestCase() {
 
-    fun testFormatRealFile() {
-        val inputPath = "sche_netdata.e"
-        val outputPath = "sche_netdata_format.e"
-        
-        val inputFile = java.io.File(inputPath)
-        if (!inputFile.exists()) {
-            println("Input file not found: " + inputPath)
-            return
-        }
-        
-        val content = inputFile.readText(java.nio.charset.Charset.forName("GBK"))
-        myFixture.configureByText("sche_netdata.e", content)
-        
-        val project = myFixture.project
-        val psiFile = myFixture.file
-        
-        // Execute formatting
-        com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(project) {
-            CodeStyleManager.getInstance(project).reformat(psiFile)
-        }
-        
-        // Save result
-        val after = psiFile.text
-        java.io.File(outputPath).writeText(after, java.nio.charset.Charset.forName("GBK"))
-        println("Formatted content saved to: " + outputPath)
-    }
     fun testAlignment() {
         // Use GBK as verified previously
         val text = """
