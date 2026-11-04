@@ -8,3 +8,5 @@ build/
 *.e
 *.bat
 电力系统数据标记语言——E语言规范.pdf
+.omc/
+docs/superpowers/
